@@ -18,8 +18,9 @@ disable-model-invocation: true
 
 ## 난이도와 역할
 
-난이도별 기본 역할 조합은 `~/.config/coding-harness/pane/routing.json`에 `<cli>:<등급>`으로 있고, 모델 ID는 `models.json`에 있다. 사용자가 지정한 CLI·모델·effort·pane이
-우선하고, 사용자가 지정한 최종 검수자는 기본 검수자를 대체한다.
+기본값은 `~/.config/coding-harness/pane/routing.json`의 난이도별 역할 조합(`<cli>:<등급>`)과 `models.json`의 모델·effort를 따른다.
+사용자가 어떤 역할의 CLI·모델·effort·pane을 지정하면 그 역할은 기본값 대신 지정한 그대로 수행한다.
+지정한 모델을 바꾸거나 다른 모델을 더하지 않고, 지정한 최종 검수자는 기본 검수자를 대체한다.
 
 - `simple`: 메인이 직접 계획·구현·검수한다.
 - `medium`: 외부 모델이 계획·구현·최종 검수를 맡는다.

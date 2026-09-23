@@ -14,7 +14,7 @@
   "hard": {
     "planner": "codex:top",
     "plan_reviewers": ["claude:top"],
-    "worker": "opencode:light",
+    "worker": "codex:light",
     "reviewers": ["claude:top", "codex:top"]
   }
 }
