@@ -54,6 +54,41 @@ sync_codex_agents() {
 	printf '갱신: %s\n' "$file"
 }
 
+# OpenCode는 disable-model-invocation을 모르므로, 명시 호출 전용 스킬은 skill 권한을 ask로 두어 자동 호출을 막는다.
+sync_opencode_skill_permissions() {
+	python3 - "$REPO/skills" "$HOME/.config/opencode" <<'PY'
+import json
+import re
+import sys
+from pathlib import Path
+
+skills, config_dir = Path(sys.argv[1]), Path(sys.argv[2])
+explicit = sorted(p.parent.name for p in skills.glob("*/SKILL.md")
+                  if re.search(r"^disable-model-invocation:\s*true\s*$", p.read_text().split("\n---", 1)[0], re.M))
+path = next((config_dir / name for name in ("opencode.jsonc", "opencode.json") if (config_dir / name).is_file()),
+            config_dir / "opencode.jsonc")
+wanted = {"permission": {"skill": {name: "ask" for name in explicit}}}
+try:
+    config = json.loads(path.read_text()) if path.is_file() else {}
+except json.JSONDecodeError:
+    config = None
+permission = config.setdefault("permission", {}) if isinstance(config, dict) else None
+if not isinstance(permission, dict):
+    print(f"건너뜀: {path}을(를) 자동으로 고칠 수 없습니다(주석 등). 다음 설정을 직접 넣으세요.\n  {json.dumps(wanted)}",
+          file=sys.stderr)
+    sys.exit(0)
+skill = permission.get("skill", {})
+if isinstance(skill, str):
+    skill = {"*": skill}
+missing = [name for name in explicit if name not in skill]
+if missing:
+    skill.update({name: "ask" for name in missing})
+    permission["skill"] = skill
+    path.write_text(json.dumps(config, indent=2, ensure_ascii=False) + "\n")
+    print(f"갱신: {path} (skill 권한 ask: {', '.join(missing)})")
+PY
+}
+
 for tool in git python3; do
 	if ! command -v "$tool" >/dev/null 2>&1; then
 		printf '필수 도구가 없습니다: %s\n' "$tool" >&2
@@ -74,6 +109,7 @@ fi
 if [ -d "$HOME/.config/opencode" ]; then
 	link "$HARNESS/AGENTS.md" "$HOME/.config/opencode/AGENTS.md"
 	link_skills skills "$HOME/.config/opencode/skills"
+	sync_opencode_skill_permissions
 fi
 if [ -d "$HOME/.gemini/antigravity-cli" ]; then
 	link "$HARNESS/AGENTS.md" "$HOME/.gemini/GEMINI.md"
