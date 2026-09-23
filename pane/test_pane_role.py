@@ -86,9 +86,9 @@ class PaneTests(unittest.TestCase):
             self.assertIn("--prompt", command)
             self.assertNotIn("--session", command)
             config = json.loads(environment["OPENCODE_CONFIG_CONTENT"])
-            self.assertEqual(config["model"], pane.MODELS["opencode"]["light"])
+            self.assertEqual(config["model"], pane.MODELS["opencode"]["light"]["model"])
             self.assertEqual(config["agent"]["chunk-worker"]["permission"]["task"], "deny")
-            request.update(role="review", cli="codex", model="codex:standard", model_id=pane.MODELS["codex"]["standard"])
+            request.update(role="review", cli="codex", model="codex:standard", model_id=pane.MODELS["codex"]["standard"]["model"])
             command, _ = pane.launch_command(request)
             self.assertNotIn("exec", command)
             self.assertNotIn("--auto", command)
@@ -195,7 +195,8 @@ class PaneTests(unittest.TestCase):
             pane.model_selection("custom-model", "missing-cli")
 
     def test_tier_resolves_from_models_json_and_unknown_tier_fails(self):
-        self.assertEqual(pane.model_selection("codex:top"), ("codex", pane.MODELS["codex"]["top"]))
+        top = pane.MODELS["codex"]["top"]
+        self.assertEqual(pane.model_selection("codex:top"), ("codex", top["model"], top.get("effort")))
         for spec in ("codex:huge", "agy:top"):
             with self.subTest(spec=spec), self.assertRaises(ValueError):
                 pane.model_selection(spec)
@@ -223,6 +224,17 @@ class PaneTests(unittest.TestCase):
         with patch.object(pane, "binary", side_effect=lambda name: name):
             command, _ = pane.launch_command(request)
             self.assertEqual(command[command.index("--effort") + 1], "high")
+
+    def test_models_json_effort_applies_unless_effort_is_given(self):
+        self.args.model, self.args.role = "codex:light", "review"
+        self.args.workdir = self.root / "project"
+        self.args.workdir.mkdir()
+        with patch.dict(pane.MODELS, {"codex": {"light": {"model": "gpt-test", "effort": "max"}}}):
+            request, _ = self.prepare()
+            self.assertEqual((request["model_id"], request["effort"]), ("gpt-test", "max"))
+            self.args.effort, self.args.output_dir = "low", self.root / "output-explicit"
+            request, _ = self.prepare()
+            self.assertEqual(request["effort"], "low")
 
     def test_custom_opencode_model_and_readonly_permissions(self):
         self.args.cli, self.args.model, self.args.role = "opencode", "provider/specific", "review"

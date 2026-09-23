@@ -15,22 +15,26 @@ import uuid
 
 MODELS = json.loads((Path(__file__).resolve().parents[1] / "models.json").read_text())
 CLIS = ("claude", "codex", "opencode", "agy")
+EFFORTS = {"claude": ("low", "medium", "high", "xhigh", "max"), "agy": ("low", "medium", "high")}
 TERMINAL = {"reported", "failed", "closed"}
 ROLE_FILES = {"worker": "implementer.md", "plan": "planner.md",
               "plan-review": "reviewer.md", "review": "reviewer.md"}
 
 
 def model_selection(model, cli=None):
+    """(cli, 모델 ID, models.json에 정한 effort 또는 None)을 돌려준다."""
     tier_cli, _, tier = model.partition(":")
     if tier and tier_cli in CLIS:
         if tier not in MODELS.get(tier_cli, {}):
             raise ValueError(f"models.json에 {tier_cli}의 {tier} 등급이 없습니다")
         if cli and cli != tier_cli:
             raise ValueError("등급 지정의 CLI와 --cli가 다릅니다")
-        return tier_cli, MODELS[tier_cli][tier]
+        entry = MODELS[tier_cli][tier]
+        return tier_cli, entry["model"], entry.get("effort")
     if cli not in CLIS or not model or model.startswith("-") or any(c.isspace() for c in model):
         raise ValueError("--model에는 <cli>:<등급> 또는 --cli와 함께 공백 없는 정확한 모델 ID가 필요합니다")
-    return cli, model
+    entry = next((e for e in MODELS.get(cli, {}).values() if e["model"] == model), {})
+    return cli, model, entry.get("effort")
 
 
 def role_text(request):
@@ -111,12 +115,12 @@ def notify(request, status):
 
 def prepare(args):
     role, model = args.role, args.model
-    cli, model_id = model_selection(model, getattr(args, "cli", None))
-    effort = getattr(args, "effort", None)
+    cli, model_id, model_effort = model_selection(model, getattr(args, "cli", None))
+    effort = getattr(args, "effort", None) or model_effort
     if effort and cli == "opencode":
         raise ValueError("OpenCode effort는 이 helper에서 지원하지 않습니다. 임의로 무시하지 않습니다")
-    if effort and cli in ("claude", "agy") and effort not in ("low", "medium", "high"):
-        raise ValueError("이 CLI의 helper effort는 low, medium, high만 지원합니다")
+    if effort and cli in EFFORTS and effort not in EFFORTS[cli]:
+        raise ValueError(f"{cli} helper effort는 {', '.join(EFFORTS[cli])}만 지원합니다")
     target, reply = tab(args.target_tab), current_tab()
     if target == reply:
         raise ValueError("자신의 pane에는 위임할 수 없습니다")

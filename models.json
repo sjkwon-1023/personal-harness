@@ -1,15 +1,15 @@
 {
   "claude": {
-    "light": "claude-sonnet-5",
-    "standard": "claude-opus-5-5",
-    "top": "claude-fable-5-1"
+    "light": { "model": "claude-sonnet-5", "effort": "high" },
+    "standard": { "model": "claude-opus-5-5" },
+    "top": { "model": "claude-fable-5-1" }
   },
   "codex": {
-    "light": "gpt-6-luna",
-    "standard": "gpt-6-sol",
-    "top": "gpt-6-astra"
+    "light": { "model": "gpt-6-luna", "effort": "max" },
+    "standard": { "model": "gpt-6-sol", "effort": "high" },
+    "top": { "model": "gpt-6-astra" }
   },
   "opencode": {
-    "light": "opencode-go/deepseek-v4.1-flash"
+    "light": { "model": "opencode-go/deepseek-v4.1-flash" }
   }
 }

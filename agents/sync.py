@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """agents.json의 에이전트 설정과 <이름>.md 본문으로 각 CLI의 서브에이전트 파일을 만든다.
 
-모델 ID는 레포 루트 models.json에서 에이전트의 tier로 찾는다. tier가 없으면 모델 줄을 쓰지 않아
+모델 ID와 effort는 레포 루트 models.json에서 에이전트의 tier로 찾는다. tier가 없으면 모델 줄을 쓰지 않아
 그 CLI의 메인 모델을 이어받는다.
 """
 import json
@@ -55,7 +55,7 @@ def settings_for(name, agent, cli):
     if tier is not None:
         if tier not in MODELS.get(cli, {}):
             raise ValueError(f"{name}: models.json에 {cli}의 {tier} 등급이 없습니다")
-        settings["model"] = MODELS[cli][tier]
+        settings.update(MODELS[cli][tier])
     return settings
 
 

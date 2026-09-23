@@ -25,7 +25,7 @@ python3 $H send --request /abs/runs/<task-id>/<단계>/request.json
 
 - `--role`: `plan`, `plan-review`, `review`, `worker`. helper가 맞는 `roles/*.md`를 요청의 `role.md`로 복사해 첫 프롬프트에 넣는다.
 - `--model`: `codex:top`처럼 `<cli>:<등급>`으로 준다. 등급별 모델 ID는 레포 루트 `models.json`에만 있다. 목록에 없는 모델은 `--cli claude|codex|opencode|agy`와 그 CLI의 정확한 모델 ID를 준다.
-- `--effort`: 선택. 생략하면 Codex는 high, 나머지는 각 CLI 기본값을 쓴다. OpenCode는 지정할 수 없다.
+- `--effort`: 선택. 생략하면 `models.json`에 정한 effort, 거기도 없으면 Codex는 high, 나머지는 각 CLI 기본값을 쓴다. OpenCode는 지정할 수 없다.
 - 계획·검수의 `--output-dir`는 프로젝트 밖이어야 한다.
 - 브리프에는 원문 요구, 범위, 확정 제약, 관련 파일의 절대경로, 실제 검증 명령과 결과를 적는다. 큰 자료는 경로로 넘기고, 메인의 평가나 기대하는 결론은 넣지 않는다.
 

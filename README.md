@@ -7,7 +7,7 @@ Claude Code, Codex, OpenCode, Antigravity CLI가 함께 쓰는 개인 전역 지
 | `AGENTS.md` | 전역 지침 |
 | `skills/` | 모든 CLI 공용 스킬 |
 | `roles/` | 위임 세션에 주입하는 역할 지침 |
-| `models.json` | CLI별 등급(`light`/`standard`/`top`) 모델 ID. 모델을 바꿀 때는 이 파일만 고친다 |
+| `models.json` | CLI별 등급(`light`/`standard`/`top`)의 모델 ID와 effort. 모델을 바꿀 때는 이 파일만 고친다 |
 | `pane/` | mast pane 위임 절차, helper, 난이도별 역할 조합(`routing.json`) |
 | `agents/` | 서브에이전트 본문, CLI별 모델(`agents.json`), 생성 스크립트 |
 | `bin/new-worktree` | 베어 워크트리 컨테이너용 워크트리 생성 명령 |
