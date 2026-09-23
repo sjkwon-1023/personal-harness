@@ -1,0 +1,25 @@
+{
+  "agent": {
+    "chunk-worker": {
+      "description": "메인이 지정한 범위만 수행하고 결과를 회신하는 pane 역할.",
+      "mode": "primary",
+      "permission": {
+        "task": "deny",
+        "skill": "deny",
+        "question": "deny",
+        "external_directory": "ask",
+        "edit": "allow",
+        "bash": {
+          "*": "allow",
+          "git commit*": "deny",
+          "git push*": "deny",
+          "gh pr*": "deny",
+          "claude*": "deny",
+          "codex*": "deny",
+          "opencode*": "deny",
+          "agy*": "deny"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+# 베어 워크트리 컨테이너(.bare + 브랜치별 워크트리 디렉터리)에서 워크트리를 만든다.
+# 성공 시 stdout 에는 워크트리 경로만 나가고 진행 로그는 stderr 로 보내므로
+# `cd "$(new-worktree feature/x)"` 형태로 바로 쓸 수 있다.
+set -euo pipefail
+
+usage() {
+	cat >&2 <<'EOF'
+사용법: new-worktree [옵션] <브랜치> [베이스-ref]
+
+  컨테이너(상위 디렉터리 중 .bare 를 가진 곳) 안 어디서든 실행한다.
+  워크트리 디렉터리 이름은 브랜치명의 '/' 를 '-' 로 평탄화한 것이다.
+
+  브랜치 해석 순서:
+    1. 로컬 브랜치가 있으면       → 그 브랜치로 워크트리를 만든다
+    2. origin/<브랜치> 가 있으면  → 추적 브랜치를 새로 만들어 체크아웃한다
+    3. 둘 다 없으면               → 베이스-ref(기본값 origin/HEAD)에서 새 브랜치를 만든다
+
+옵션:
+  -n, --no-fetch   시작할 때 origin fetch 를 건너뛴다
+  -h, --help       이 도움말
+
+예:
+  new-worktree feature/TR-123-login        → <컨테이너>/feature-TR-123-login
+  new-worktree hotfix/x origin/release-1.2
+  cd "$(new-worktree fix/flaky-test)"
+EOF
+}
+
+die() {
+	printf '오류: %s\n' "$1" >&2
+	exit 1
+}
+
+do_fetch=1
+args=()
+while [ $# -gt 0 ]; do
+	case "$1" in
+	-h | --help)
+		usage
+		exit 0
+		;;
+	-n | --no-fetch)
+		do_fetch=0
+		shift
+		;;
+	--)
+		shift
+		args+=("$@")
+		break
+		;;
+	-*) die "알 수 없는 옵션: $1" ;;
+	*)
+		args+=("$1")
+		shift
+		;;
+	esac
+done
+if [ ${#args[@]} -gt 0 ]; then set -- "${args[@]}"; else set --; fi
+
+branch=${1:-}
+base=${2:-}
+[ -n "$branch" ] || {
+	usage
+	exit 1
+}
+[ $# -le 2 ] || die "인자가 너무 많다 (브랜치, 베이스-ref 두 개까지)"
+git check-ref-format --branch "$branch" >/dev/null 2>&1 || die "브랜치명이 올바르지 않다: $branch"
+
+# 컨테이너 루트 = 상위로 올라가며 만나는 첫 .bare 보유 디렉터리.
+# 컨테이너 루트의 .git 파일은 없는 컨테이너도 있어 기준으로 삼지 않는다.
+container=""
+dir_cursor=$PWD
+while :; do
+	if [ -d "$dir_cursor/.bare" ] &&
+		[ "$(git -C "$dir_cursor/.bare" rev-parse --is-bare-repository 2>/dev/null)" = true ]; then
+		container=$dir_cursor
+		break
+	fi
+	[ "$dir_cursor" = / ] && break
+	dir_cursor=$(dirname "$dir_cursor")
+done
+[ -n "$container" ] || die ".bare 컨테이너를 찾지 못했다 (현재 위치: $PWD)"
+bare="$container/.bare"
+
+# 같은 브랜치가 이미 다른 워크트리에 체크아웃돼 있으면 새로 만들지 않고 그 경로를 돌려준다.
+existing=$(git -C "$bare" worktree list --porcelain |
+	awk -v b="refs/heads/$branch" '
+		/^worktree /{p = substr($0, 10)}
+		/^branch /  {if (substr($0, 8) == b) {print p; exit}}')
+if [ -n "$existing" ]; then
+	printf "알림: '%s' 는 이미 워크트리에 있다 → %s\n" "$branch" "$existing" >&2
+	printf '%s\n' "$existing"
+	exit 0
+fi
+
+if [ "$do_fetch" = 1 ]; then
+	git -C "$bare" fetch origin --prune --quiet ||
+		printf '경고: fetch 실패 — 로컬 ref 만으로 진행한다\n' >&2
+fi
+
+path="$container/${branch//\//-}"
+[ -e "$path" ] && die "이미 존재한다: $path"
+
+if git -C "$bare" show-ref --verify --quiet "refs/heads/$branch"; then
+	git -C "$bare" worktree add "$path" "$branch" >&2
+elif git -C "$bare" show-ref --verify --quiet "refs/remotes/origin/$branch"; then
+	git -C "$bare" worktree add --track -b "$branch" "$path" "origin/$branch" >&2
+else
+	if [ -z "$base" ]; then
+		base=$(git -C "$bare" symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null ||
+			git -C "$bare" symbolic-ref --short HEAD)
+	fi
+	git -C "$bare" rev-parse --verify --quiet "$base^{commit}" >/dev/null ||
+		die "베이스 ref 를 찾을 수 없다: $base"
+	# --no-track: 베이스가 origin/main 같은 원격 추적 ref 면 git 이 그걸 upstream 으로 박아 버린다.
+	# 그러면 이 브랜치에서 git pull 이 베이스를 끌어와 머지하고, push.default=simple 인 git push 는
+	# 이름 불일치로 거부된다. upstream 은 첫 `git push -u origin HEAD` 때 제 짝으로 붙게 둔다.
+	git -C "$bare" worktree add --no-track -b "$branch" "$path" "$base" >&2
+fi
+
+printf '%s\n' "$path"
