@@ -1,0 +1,15 @@
+{
+  "claude": {
+    "light": "claude-sonnet-5",
+    "standard": "claude-opus-5-5",
+    "top": "claude-fable-5-1"
+  },
+  "codex": {
+    "light": "gpt-6-luna",
+    "standard": "gpt-6-sol",
+    "top": "gpt-6-astra"
+  },
+  "opencode": {
+    "light": "opencode-go/deepseek-v4.1-flash"
+  }
+}

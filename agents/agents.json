@@ -1,13 +1,12 @@
 {
   "repo-scout": {
     "description": "읽기 전용 레포 정찰 에이전트. 'X가 어디 있나, 어디서 쓰이나, 이 기능 관련 파일이 뭐냐' 같은 넓은 탐색을 맡기고 결론과 핵심 파일 경로만 받는다. 코드 리뷰·감사는 하지 않는다.",
+    "tier": "light",
     "claude": {
-      "model": "claude-sonnet-5",
       "effort": "low",
       "tools": "Read, Grep, Glob, Bash"
     },
     "codex": {
-      "model": "gpt-6-luna",
       "effort": "medium",
       "sandbox": "read-only"
     },

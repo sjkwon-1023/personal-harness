@@ -22,7 +22,7 @@ class PaneTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.brief = self.root / "brief ' $(literal).md"
         self.brief.write_text("R1: implement only this chunk")
-        self.args = SimpleNamespace(role="worker", model="deepseek", target_tab="38",
+        self.args = SimpleNamespace(role="worker", model="opencode:light", target_tab="38",
                                     workdir=self.root, brief=self.brief, output_dir=self.root / "output")
         self.env = patch.dict(os.environ, {"MAST": "1", "MAST_TAB": "6"})
         self.env.start()
@@ -86,9 +86,9 @@ class PaneTests(unittest.TestCase):
             self.assertIn("--prompt", command)
             self.assertNotIn("--session", command)
             config = json.loads(environment["OPENCODE_CONFIG_CONTENT"])
-            self.assertEqual(config["model"], pane.MODELS["deepseek"])
+            self.assertEqual(config["model"], pane.MODELS["opencode"]["light"])
             self.assertEqual(config["agent"]["chunk-worker"]["permission"]["task"], "deny")
-            request.update(role="review", cli="codex", model="sol", model_id=pane.MODELS["sol"])
+            request.update(role="review", cli="codex", model="codex:standard", model_id=pane.MODELS["codex"]["standard"])
             command, _ = pane.launch_command(request)
             self.assertNotIn("exec", command)
             self.assertNotIn("--auto", command)
@@ -194,22 +194,24 @@ class PaneTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             pane.model_selection("custom-model", "missing-cli")
 
+    def test_tier_resolves_from_models_json_and_unknown_tier_fails(self):
+        self.assertEqual(pane.model_selection("codex:top"), ("codex", pane.MODELS["codex"]["top"]))
+        for spec in ("codex:huge", "agy:top"):
+            with self.subTest(spec=spec), self.assertRaises(ValueError):
+                pane.model_selection(spec)
+
     def test_readonly_output_cannot_be_inside_project(self):
         self.args.role = "review"
         with self.assertRaises(ValueError):
             pane.prepare(self.args)
         self.assertFalse(self.args.output_dir.exists())
 
-    def test_legacy_request_routes_without_cli_or_role_snapshot(self):
+    def test_request_without_role_snapshot_reads_role_source(self):
         request, _ = self.prepare()
-        request.pop("cli")
         request.pop("role_file")
         with patch.object(pane, "binary", side_effect=lambda name: name):
             command, _ = pane.launch_command(request)
             self.assertEqual(command[0], "opencode")
-            request.update(role="review", model="sol", model_id=pane.MODELS["sol"])
-            command, _ = pane.launch_command(request)
-            self.assertEqual(command[0], "codex")
 
     def test_effort_is_preserved_or_explicitly_rejected(self):
         self.args.effort = "high"
