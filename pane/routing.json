@@ -1,54 +1,20 @@
 {
-  "models": {
-    "sol": {
-      "cli": "codex",
-      "model": "gpt-6-sol"
-    },
-    "astra": {
-      "cli": "codex",
-      "model": "gpt-6-astra"
-    },
-    "deepseek": {
-      "cli": "opencode",
-      "model": "opencode-go/deepseek-v4.1-flash"
-    },
-    "fable": {
-      "cli": "claude",
-      "model": "claude-fable-5-1"
-    },
-    "opus": {
-      "cli": "claude",
-      "model": "opus"
-    }
+  "simple": {
+    "planner": null,
+    "plan_reviewers": [],
+    "worker": null,
+    "reviewers": []
   },
-  "defaults": {
-    "simple": {
-      "planner": null,
-      "plan_reviewers": [],
-      "worker": null,
-      "reviewers": []
-    },
-    "medium": {
-      "planner": "sol",
-      "plan_reviewers": [],
-      "worker": "deepseek",
-      "reviewers": [
-        "sol"
-      ]
-    },
-    "hard": {
-      "planner": "astra",
-      "plan_reviewers": [
-        "fable"
-      ],
-      "worker": "deepseek",
-      "reviewers": [
-        "fable",
-        "astra"
-      ]
-    }
+  "medium": {
+    "planner": "codex:standard",
+    "plan_reviewers": [],
+    "worker": "opencode:light",
+    "reviewers": ["codex:standard"]
   },
-  "standalone_review": [
-    "sol"
-  ]
+  "hard": {
+    "planner": "codex:top",
+    "plan_reviewers": ["claude:top"],
+    "worker": "codex:light",
+    "reviewers": ["claude:top", "codex:top"]
+  }
 }

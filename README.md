@@ -7,7 +7,8 @@ Claude Code, Codex, OpenCode, Antigravity CLI가 함께 쓰는 개인 전역 지
 | `AGENTS.md` | 전역 지침 |
 | `skills/` | 모든 CLI 공용 스킬 |
 | `roles/` | 위임 세션에 주입하는 역할 지침 |
-| `pane/` | mast pane 위임 절차, helper, 모델 별칭(`routing.json`) |
+| `models.json` | CLI별 등급(`light`/`standard`/`top`)의 모델 ID와 effort. 모델을 바꿀 때는 이 파일만 고친다 |
+| `pane/` | mast pane 위임 절차, helper, 난이도별 역할 조합(`routing.json`) |
 | `agents/` | 서브에이전트 본문, CLI별 모델(`agents.json`), 생성 스크립트 |
 | `bin/new-worktree` | 베어 워크트리 컨테이너용 워크트리 생성 명령 |
 
@@ -36,7 +37,7 @@ git -C .bare worktree add ../main main
 
 ## 업데이트
 
-`main` 워크트리에서 `git pull`하면 링크된 지침과 스킬은 바로 반영된다. `AGENTS.md`, `agents/`, 스킬 목록이 바뀌었으면
+`main` 워크트리에서 `git pull`하면 링크된 지침과 스킬은 바로 반영된다. `AGENTS.md`, `models.json`, `agents/`, 스킬 목록이 바뀌었으면
 `./install.sh`를 다시 실행한다. 수정은 `new-worktree`로 만든 기능 워크트리에서 하고 PR로 머지한다.
 
 ## 레포에 두지 않는 것

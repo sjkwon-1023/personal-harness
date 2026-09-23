@@ -13,23 +13,28 @@ import time
 import uuid
 
 
-ROUTING = json.loads(Path(__file__).with_name("routing.json").read_text())
-MODELS = {name: item["model"] for name, item in ROUTING["models"].items()}
+MODELS = json.loads((Path(__file__).resolve().parents[1] / "models.json").read_text())
 CLIS = ("claude", "codex", "opencode", "agy")
+EFFORTS = {"claude": ("low", "medium", "high", "xhigh", "max"), "agy": ("low", "medium", "high")}
 TERMINAL = {"reported", "failed", "closed"}
 ROLE_FILES = {"worker": "implementer.md", "plan": "planner.md",
               "plan-review": "reviewer.md", "review": "reviewer.md"}
 
 
 def model_selection(model, cli=None):
-    if model in ROUTING["models"]:
-        selected = ROUTING["models"][model]
-        if cli and cli != selected["cli"]:
-            raise ValueError("모델 별칭의 CLI와 다릅니다. 해당 CLI의 정확한 모델 ID를 지정하세요")
-        return selected["cli"], selected["model"]
+    """(cli, 모델 ID, models.json에 정한 effort 또는 None)을 돌려준다."""
+    tier_cli, _, tier = model.partition(":")
+    if tier and tier_cli in CLIS:
+        if tier not in MODELS.get(tier_cli, {}):
+            raise ValueError(f"models.json에 {tier_cli}의 {tier} 등급이 없습니다")
+        if cli and cli != tier_cli:
+            raise ValueError("등급 지정의 CLI와 --cli가 다릅니다")
+        entry = MODELS[tier_cli][tier]
+        return tier_cli, entry["model"], entry.get("effort")
     if cli not in CLIS or not model or model.startswith("-") or any(c.isspace() for c in model):
-        raise ValueError("사용자 모델에는 --cli와 공백 없는 정확한 모델 ID가 필요합니다")
-    return cli, model
+        raise ValueError("--model에는 <cli>:<등급> 또는 --cli와 함께 공백 없는 정확한 모델 ID가 필요합니다")
+    entry = next((e for e in MODELS.get(cli, {}).values() if e["model"] == model), {})
+    return cli, model, entry.get("effort")
 
 
 def role_text(request):
@@ -110,12 +115,10 @@ def notify(request, status):
 
 def prepare(args):
     role, model = args.role, args.model
-    cli, model_id = model_selection(model, getattr(args, "cli", None))
-    effort = getattr(args, "effort", None)
-    if effort and cli == "opencode":
-        raise ValueError("OpenCode effort는 이 helper에서 지원하지 않습니다. 임의로 무시하지 않습니다")
-    if effort and cli in ("claude", "agy") and effort not in ("low", "medium", "high"):
-        raise ValueError("이 CLI의 helper effort는 low, medium, high만 지원합니다")
+    cli, model_id, model_effort = model_selection(model, getattr(args, "cli", None))
+    effort = getattr(args, "effort", None) or model_effort
+    if effort and cli in EFFORTS and effort not in EFFORTS[cli]:
+        raise ValueError(f"{cli} helper effort는 {', '.join(EFFORTS[cli])}만 지원합니다")
     target, reply = tab(args.target_tab), current_tab()
     if target == reply:
         raise ValueError("자신의 pane에는 위임할 수 없습니다")
@@ -158,7 +161,7 @@ def launch_command(request):
               f" {request['protocol']} 을 먼저 읽고 요청 {Path(request['output_dir']) / 'request.json'} 을 수행하세요. "
               "ack 후 브리프를 실행하고 결과 저장·finish 회신으로 끝내세요. 다른 AI를 호출하지 마세요.")
     environment = os.environ.copy()
-    cli = request.get("cli") or model_selection(request["model"])[0]
+    cli = request["cli"]
     worker = request["role"] == "worker"
     cwd = request["workdir"] if worker else request["output_dir"]
     effort = request.get("effort")
@@ -169,6 +172,9 @@ def launch_command(request):
         template = json.loads(Path(__file__).with_name("worker-config.json").read_text())
         agent = template["agent"]["chunk-worker"]
         agent["model"] = request["model_id"]
+        if effort:
+            # OpenCode는 reasoning effort를 모델별 variant 이름(예: low/high/max)으로 받는다.
+            agent["variant"] = effort
         agent["prompt"] = role_text(request)
         agent["permission"]["external_directory"] = {
             "*": "ask", request["output_dir"] + "/*": "allow",
@@ -304,7 +310,7 @@ def main():
     commands = parser.add_subparsers(dest="action", required=True)
     p = commands.add_parser("prepare")
     p.add_argument("--role", choices=["plan", "plan-review", "review", "worker"], required=True)
-    p.add_argument("--model", required=True, help="routing.json 별칭 또는 해당 CLI의 정확한 모델 ID")
+    p.add_argument("--model", required=True, help="<cli>:<등급>(models.json) 또는 --cli와 함께 쓰는 정확한 모델 ID")
     p.add_argument("--cli", choices=CLIS)
     p.add_argument("--effort", choices=["minimal", "low", "medium", "high", "xhigh", "max"])
     p.add_argument("--target-tab", required=True)
