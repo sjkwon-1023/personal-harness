@@ -6,7 +6,6 @@ Claude Code, Codex, OpenCode, Antigravity CLI가 함께 쓰는 개인 전역 지
 |---|---|
 | `AGENTS.md` | 전역 지침 |
 | `skills/` | 모든 CLI 공용 스킬 |
-| `claude/skills/` | Claude Code 전용 스킬 |
 | `roles/` | 위임 세션에 주입하는 역할 지침 |
 | `pane/` | mast pane 위임 절차, helper, 모델 별칭(`routing.json`) |
 | `agents/` | 서브에이전트 본문, CLI별 모델(`agents.json`), 생성 스크립트 |
