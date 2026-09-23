@@ -66,7 +66,6 @@ link "$REPO" "$HARNESS"
 if [ -d "$HOME/.claude" ]; then
 	link "$HARNESS/AGENTS.md" "$HOME/.claude/CLAUDE.md"
 	link_skills skills "$HOME/.claude/skills"
-	link_skills claude/skills "$HOME/.claude/skills"
 fi
 if [ -d "$HOME/.codex" ]; then
 	sync_codex_agents
