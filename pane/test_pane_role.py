@@ -179,6 +179,20 @@ class PaneTests(unittest.TestCase):
                     if cli == "claude":
                         self.assertNotIn("Agent", command[command.index("--tools") + 1].split(","))
 
+    def test_only_research_role_gets_web_search(self):
+        project = self.root / "project"
+        project.mkdir()
+        for cli in ("codex", "claude"):
+            for role in ("research", "review"):
+                with self.subTest(cli=cli, role=role):
+                    self.args.cli, self.args.role, self.args.model = cli, role, "custom-model"
+                    self.args.workdir, self.args.output_dir = project, self.root / (cli + "-" + role)
+                    request, _ = self.prepare()
+                    with patch.object(pane, "binary", side_effect=lambda name: name):
+                        command, _ = pane.launch_command(request)
+                    web = "--search" in command if cli == "codex" else "WebSearch" in command[command.index("--tools") + 1]
+                    self.assertEqual(web, role == "research")
+
     def test_role_snapshot_survives_source_changes(self):
         request, _ = self.prepare()
         text = Path(request["role_file"]).read_text()
