@@ -17,7 +17,7 @@ MODELS = json.loads((Path(__file__).resolve().parents[1] / "models.json").read_t
 CLIS = ("claude", "codex", "opencode", "agy")
 EFFORTS = {"claude": ("low", "medium", "high", "xhigh", "max"), "agy": ("low", "medium", "high")}
 TERMINAL = {"reported", "failed", "closed"}
-ROLE_FILES = {"worker": "implementer.md", "plan": "planner.md",
+ROLE_FILES = {"worker": "implementer.md", "plan": "planner.md", "research": "researcher.md",
               "plan-review": "reviewer.md", "review": "reviewer.md"}
 
 
@@ -163,6 +163,7 @@ def launch_command(request):
     environment = os.environ.copy()
     cli = request["cli"]
     worker = request["role"] == "worker"
+    research = request["role"] == "research"
     cwd = request["workdir"] if worker else request["output_dir"]
     effort = request.get("effort")
     if cli == "opencode":
@@ -195,10 +196,12 @@ def launch_command(request):
                    "-c", "notify=[]"]
         if worker:
             command.extend(["--add-dir", request["output_dir"]])
+        if research:
+            command.append("--search")
         command.extend(["-c", "model_reasoning_effort=" + json.dumps(effort or "high"), prompt])
     elif cli == "claude":
         command = [binary("claude"), "--model", request["model_id"],
-                   "--tools", "Bash,Read,Write,Edit,Grep,Glob"]
+                   "--tools", "Bash,Read,Write,Edit,Grep,Glob" + (",WebSearch,WebFetch" if research else "")]
         if not worker:
             command.extend(["--add-dir", request["workdir"]])
         else:
@@ -309,7 +312,7 @@ def main():
     parser = argparse.ArgumentParser(description="mast 전용 pane에 새 대화형 AI 세션을 전송합니다")
     commands = parser.add_subparsers(dest="action", required=True)
     p = commands.add_parser("prepare")
-    p.add_argument("--role", choices=["plan", "plan-review", "review", "worker"], required=True)
+    p.add_argument("--role", choices=["plan", "plan-review", "research", "review", "worker"], required=True)
     p.add_argument("--model", required=True, help="<cli>:<등급>(models.json) 또는 --cli와 함께 쓰는 정확한 모델 ID")
     p.add_argument("--cli", choices=CLIS)
     p.add_argument("--effort", choices=["minimal", "low", "medium", "high", "xhigh", "max"])

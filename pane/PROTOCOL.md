@@ -13,7 +13,7 @@
    python3 <helper> ack --request <request.json>
    ```
 
-3. `<output_dir>/brief.md`와 workdir의 프로젝트 지침을 읽는다. 계획·검수 역할은 cwd가 결과 디렉터리이므로 코드는 workdir 절대경로로 조회한다.
+3. `<output_dir>/brief.md`와 workdir의 프로젝트 지침을 읽는다. worker가 아닌 역할은 cwd가 결과 디렉터리이므로 코드는 workdir 절대경로로 조회한다.
 
 추가 에이전트 생성, 다른 AI CLI 실행, 다른 작업 지휘, 상태 폴링은 하지 않는다. 역할 지침보다 넓은 권한이 필요하면 그 사실을 보고하고 멈춘다.
 
