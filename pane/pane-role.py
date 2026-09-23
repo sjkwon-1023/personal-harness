@@ -117,8 +117,6 @@ def prepare(args):
     role, model = args.role, args.model
     cli, model_id, model_effort = model_selection(model, getattr(args, "cli", None))
     effort = getattr(args, "effort", None) or model_effort
-    if effort and cli == "opencode":
-        raise ValueError("OpenCode effort는 이 helper에서 지원하지 않습니다. 임의로 무시하지 않습니다")
     if effort and cli in EFFORTS and effort not in EFFORTS[cli]:
         raise ValueError(f"{cli} helper effort는 {', '.join(EFFORTS[cli])}만 지원합니다")
     target, reply = tab(args.target_tab), current_tab()
@@ -174,6 +172,9 @@ def launch_command(request):
         template = json.loads(Path(__file__).with_name("worker-config.json").read_text())
         agent = template["agent"]["chunk-worker"]
         agent["model"] = request["model_id"]
+        if effort:
+            # OpenCode는 reasoning effort를 모델별 variant 이름(예: low/high/max)으로 받는다.
+            agent["variant"] = effort
         agent["prompt"] = role_text(request)
         agent["permission"]["external_directory"] = {
             "*": "ask", request["output_dir"] + "/*": "allow",

@@ -214,12 +214,18 @@ class PaneTests(unittest.TestCase):
             command, _ = pane.launch_command(request)
             self.assertEqual(command[0], "opencode")
 
-    def test_effort_is_preserved_or_explicitly_rejected(self):
-        self.args.effort = "high"
+    def test_effort_is_passed_per_cli_or_explicitly_rejected(self):
+        self.args.effort = "max"
+        request, _ = self.prepare()
+        with patch.object(pane, "binary", side_effect=lambda name: name):
+            _, environment = pane.launch_command(request)
+        agent = json.loads(environment["OPENCODE_CONFIG_CONTENT"])["agent"]["chunk-worker"]
+        self.assertEqual(agent["variant"], "max")
+        self.args.model, self.args.cli, self.args.output_dir = "custom-model", "agy", self.root / "output-agy"
         with self.assertRaises(ValueError):
             pane.prepare(self.args)
         self.assertFalse(self.args.output_dir.exists())
-        self.args.model, self.args.cli = "custom-model", "claude"
+        self.args.cli, self.args.effort, self.args.output_dir = "claude", "high", self.root / "output-claude"
         request, _ = self.prepare()
         with patch.object(pane, "binary", side_effect=lambda name: name):
             command, _ = pane.launch_command(request)

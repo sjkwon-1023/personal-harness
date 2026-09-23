@@ -41,6 +41,8 @@ def opencode(name, description, settings, body):
     lines = ["---", f"# {NOTICE}", f"description: {quoted(description)}", "mode: subagent"]
     if "model" in settings:
         lines.append(f"model: {settings['model']}")
+    if "effort" in settings:
+        lines.append(f"variant: {settings['effort']}")
     if "permission" in settings:
         lines.append(f"permission: {quoted(settings['permission'])}")
     return HOME / ".config/opencode/agents" / f"{name}.md", "\n".join(lines + ["---", "", body])
