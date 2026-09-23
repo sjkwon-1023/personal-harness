@@ -179,19 +179,23 @@ class PaneTests(unittest.TestCase):
                     if cli == "claude":
                         self.assertNotIn("Agent", command[command.index("--tools") + 1].split(","))
 
-    def test_only_research_role_gets_web_search(self):
+    def test_claude_keeps_web_tools_and_codex_effort_comes_only_from_models(self):
         project = self.root / "project"
         project.mkdir()
-        for cli in ("codex", "claude"):
-            for role in ("research", "review"):
-                with self.subTest(cli=cli, role=role):
-                    self.args.cli, self.args.role, self.args.model = cli, role, "custom-model"
-                    self.args.workdir, self.args.output_dir = project, self.root / (cli + "-" + role)
-                    request, _ = self.prepare()
-                    with patch.object(pane, "binary", side_effect=lambda name: name):
-                        command, _ = pane.launch_command(request)
-                    web = "--search" in command if cli == "codex" else "WebSearch" in command[command.index("--tools") + 1]
-                    self.assertEqual(web, role == "research")
+        self.args.workdir = project
+        for role in pane.ROLE_FILES:
+            with self.subTest(role=role):
+                self.args.cli, self.args.role, self.args.model = "claude", role, "custom-model"
+                self.args.output_dir = self.root / ("claude-" + role)
+                request, _ = self.prepare()
+                with patch.object(pane, "binary", side_effect=lambda name: name):
+                    command, _ = pane.launch_command(request)
+                self.assertIn("WebSearch", command[command.index("--tools") + 1].split(","))
+        self.args.cli, self.args.role, self.args.output_dir = "codex", "review", self.root / "codex-no-effort"
+        request, _ = self.prepare()
+        with patch.object(pane, "binary", side_effect=lambda name: name):
+            command, _ = pane.launch_command(request)
+        self.assertFalse(any(arg.startswith("model_reasoning_effort") for arg in command))
 
     def test_role_snapshot_survives_source_changes(self):
         request, _ = self.prepare()

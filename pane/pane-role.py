@@ -163,7 +163,6 @@ def launch_command(request):
     environment = os.environ.copy()
     cli = request["cli"]
     worker = request["role"] == "worker"
-    research = request["role"] == "research"
     cwd = request["workdir"] if worker else request["output_dir"]
     effort = request.get("effort")
     if cli == "opencode":
@@ -196,12 +195,12 @@ def launch_command(request):
                    "-c", "notify=[]"]
         if worker:
             command.extend(["--add-dir", request["output_dir"]])
-        if research:
-            command.append("--search")
-        command.extend(["-c", "model_reasoning_effort=" + json.dumps(effort or "high"), prompt])
+        if effort:
+            command.extend(["-c", "model_reasoning_effort=" + json.dumps(effort)])
+        command.append(prompt)
     elif cli == "claude":
         command = [binary("claude"), "--model", request["model_id"],
-                   "--tools", "Bash,Read,Write,Edit,Grep,Glob" + (",WebSearch,WebFetch" if research else "")]
+                   "--tools", "Bash,Read,Write,Edit,Grep,Glob,WebSearch,WebFetch"]
         if not worker:
             command.extend(["--add-dir", request["workdir"]])
         else:
