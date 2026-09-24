@@ -14,13 +14,14 @@ dispatch-plan, review-plan, peer-review가 다른 pane의 외부 모델에게 �
 
 ## 요청 보내기
 
-실행 기록은 `~/.local/share/coding-harness/runs/<task-id>/`에 둔다. `mast id`, `mast ls`로 대상 pane ID를 확인하고 요청을 만든 뒤 보낸다.
+실행 기록은 작업 레포의 `.bare/harness-runs/<task-id>/`에 둔다. `mast id`, `mast ls`로 대상 pane ID를 확인하고 요청을 만든 뒤 보낸다.
+Codex가 결과 디렉터리를 cwd로 쓰는 역할은 helper가 세션 동안만 `~/.codex/config.toml`에 trust 항목을 넣고 종료 시 지운다.
 
 ```bash
 H=~/.config/coding-harness/pane/pane-role.py
 python3 $H prepare --role <역할> --model <cli>:<등급> --target-tab <ID> \
-  --workdir /abs/worktree --brief /abs/brief.md --output-dir /abs/runs/<task-id>/<단계>
-python3 $H send --request /abs/runs/<task-id>/<단계>/request.json
+  --workdir /abs/worktree --brief /abs/brief.md --output-dir /abs/repo/.bare/harness-runs/<task-id>/<단계>
+python3 $H send --request /abs/repo/.bare/harness-runs/<task-id>/<단계>/request.json
 ```
 
 - `--model`: `codex:top`처럼 `<cli>:<등급>`으로 준다. 등급별 모델 ID는 레포 루트 `models.json`에만 있다. 목록에 없는 모델은 `--cli claude|codex|opencode|agy`와 그 CLI의 정확한 모델 ID를 준다.

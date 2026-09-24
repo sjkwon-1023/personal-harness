@@ -5,6 +5,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import tomllib
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -275,6 +276,20 @@ class PaneTests(unittest.TestCase):
         self.assertEqual(agent["permission"]["edit"][request["output_dir"] + "/*"], "allow")
         self.assertEqual(agent["permission"]["bash"]["*"], "ask")
         self.assertNotIn("--auto", command)
+
+    def test_codex_trust_is_added_for_session_and_removed_after(self):
+        config = self.root / "config.toml"
+        original = 'model = "m"\n\n[projects."/other"]\ntrust_level = "trusted"\n'
+        config.write_text(original)
+        config.chmod(0o600)
+        output = str(self.root / ".bare" / "harness-runs" / "t1" / "스케치 review")
+        with patch.dict(os.environ, {"CODEX_HOME": str(self.root)}):
+            with pane.codex_trust(output):
+                self.assertEqual(tomllib.loads(config.read_text())["projects"][output]["trust_level"], "trusted")
+                with config.open("a") as file:
+                    file.write('\n[tui]\nstatus_line_use_colors = true\n')
+        self.assertEqual(config.read_text(), original + '\n[tui]\nstatus_line_use_colors = true\n')
+        self.assertEqual(config.stat().st_mode & 0o777, 0o600)
 
     def test_missing_binary_does_not_fallback(self):
         request, _ = self.prepare()
