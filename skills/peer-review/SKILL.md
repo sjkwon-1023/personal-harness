@@ -9,7 +9,7 @@ description: 사용자가 옆 mast pane의 다른 모델에게 계획이나 변�
 리뷰할 CLI·모델·pane은 사용자가 정한다. 정해지지 않았으면 고르지 말고 묻는다.
 
 1. 원문 요구, 리뷰 종류(계획/변경), 대상과 범위, 실제 diff나 계획 경로, 관련 지침과 검증 결과를 브리프 파일에 적는다.
-   실행 기록은 `~/.local/share/coding-harness/runs/<task-id>/`에 둔다.
+   실행 기록은 작업 레포의 `.bare/harness-runs/<task-id>/`에 둔다.
 2. 기본은 새 세션이다. `~/.config/coding-harness/pane/PANE.md` 절차로 변경은 `--role review`, 계획은 `--role plan-review`로 보낸다.
 3. 사용자가 이미 열린 세션의 맥락을 유지하라고 했을 때만 `[REVIEW]` 경로를 쓴다. 파일 본문은 보내지 않고 한 줄만 보낸다.
 

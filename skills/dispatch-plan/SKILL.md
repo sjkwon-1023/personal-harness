@@ -30,7 +30,7 @@ disable-model-invocation: true
 
 ## 순서
 
-1. 요청, 확정 계획, 코드 상태, 승인 범위를 확인하고 실행 기록을 `~/.local/share/coding-harness/runs/<task-id>/`에 만든다. 이어서 하는 작업은 기존 경로를 쓴다.
+1. 요청, 확정 계획, 코드 상태, 승인 범위를 확인하고 실행 기록을 작업 레포의 `.bare/harness-runs/<task-id>/`에 만든다. 이어서 하는 작업은 기존 경로를 쓴다.
 2. 실행 가능한 전체 계획이 없으면 `~/.config/coding-harness/skills/review-plan/SKILL.md`를 수행한다.
    계획이 이미 있으면 다시 쓰지 않고 요구 대응, 의존성, 소유 파일, 계약, 완료 조건, 검증 명령의 누락만 확인한다.
    `hard`는 계획이 이미 있어도 구현 전에 review-plan의 계획 검증을 받는다.

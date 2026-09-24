@@ -44,7 +44,7 @@ git -C .bare worktree add ../main main
 ## 레포에 두지 않는 것
 
 인증 정보, `~/.claude/settings.json`·`~/.codex/config.toml` 같은 컴퓨터별 설정, mast가 설치하는 스킬과 훅,
-claude.ai에서 동기화되는 스킬, 실행 기록(`~/.local/share/coding-harness/`).
+claude.ai에서 동기화되는 스킬, 실행 기록(각 레포의 `.bare/harness-runs/`).
 
 ## 제약
 

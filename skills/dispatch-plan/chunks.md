@@ -4,7 +4,7 @@ dispatch-plan 3단계의 세부 절차다. 외부 모델 위임은 `~/.config/co
 
 ## 실행 기록
 
-`~/.local/share/coding-harness/runs/<task-id>/`에 둔다. 확정 설계 문서는 프로젝트 문서 규칙을 따르고, 여기에는 그 경로와 버전만 적는다.
+작업 레포의 `.bare/harness-runs/<task-id>/`에 둔다. 확정 설계 문서는 프로젝트 문서 규칙을 따르고, 여기에는 그 경로와 버전만 적는다.
 
 - `plan.md`: 원문 요구, 설계 근거와 공통 계약, 순서 있는 전체 청크 계획, 전체 게이트.
 - `progress.json`: worktree 경로, 기준 commit, 계획 버전, 난이도, 현재 청크, 청크별 상태

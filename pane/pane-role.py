@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import contextlib
 import json
 import os
 from pathlib import Path
@@ -87,6 +88,29 @@ def write_json(path, data):
     temporary = path.with_name(path.name + ".tmp")
     temporary.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
     temporary.replace(path)
+
+
+def replace_text(path, text):
+    temporary = path.with_name(path.name + ".tmp")
+    temporary.write_text(text)
+    shutil.copymode(path, temporary)
+    temporary.replace(path)
+
+
+@contextlib.contextmanager
+def codex_trust(path):
+    # Codex는 처음 여는 폴더마다 trust를 묻고, 상위 폴더 trust나 -c projects 오버라이드로는 이를 건너뛰지 않는다.
+    config = (Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml").resolve(strict=True)
+    block = ["\n", f"[projects.{json.dumps(path, ensure_ascii=False)}]\n", "trust_level = \"trusted\"\n"]
+    replace_text(config, config.read_text().rstrip("\n") + "\n" + "".join(block))
+    try:
+        yield
+    finally:
+        lines = config.read_text().splitlines(keepends=True)
+        for start in range(len(lines) - 2):
+            if lines[start:start + 3] == block:
+                replace_text(config, "".join(lines[:start] + lines[start + 3:]))
+                break
 
 
 def load(path):
@@ -230,7 +254,8 @@ def launch(request, status):
         status.update(status="launched", launched_at=time.time(), command=command)
         save(request, status)
         cwd = request["workdir"] if request["role"] == "worker" else request["output_dir"]
-        with subprocess.Popen(command, cwd=cwd, env=environment) as process:
+        trust = codex_trust(cwd) if request["cli"] == "codex" and cwd == request["output_dir"] else contextlib.nullcontext()
+        with trust, subprocess.Popen(command, cwd=cwd, env=environment) as process:
             status.update(process_pid=process.pid, launcher_pid=os.getpid())
             status["process_start_ticks"] = Path(f"/proc/{process.pid}/stat").read_text().rpartition(")")[2].split()[19]
             save(request, status)
