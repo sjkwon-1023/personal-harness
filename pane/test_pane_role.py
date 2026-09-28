@@ -119,14 +119,12 @@ class PaneTests(unittest.TestCase):
     def test_close_identifies_session_by_launcher_despite_truncated_pane_command(self):
         request, status = self.prepare()
         status["status"] = "reported"
-        for tab, accepted in (("38", True), ("39", False)):
+        for request_path, accepted in ((self.path, True), (self.root / "other" / "request.json", False)):
             launcher = subprocess.Popen(
-                [sys.executable, "-c", "import time; time.sleep(30)", "launch", "--request", str(self.path)],
-                env=dict(os.environ, MAST_TAB=tab))
+                [sys.executable, "-c", "import time; time.sleep(30)", "launch", "--request", str(request_path)])
             self.addCleanup(launcher.wait)
             self.addCleanup(launcher.kill)
-            start, _ = pane.process_identity(launcher.pid)
-            status.update(launcher_pid=launcher.pid, process_pid=launcher.pid, process_start_ticks=start)
+            status.update(launcher_pid=launcher.pid)
             status.pop("close_requested_at", None)
             with patch.object(pane, "tabs", return_value={"38": "python3 /home/user/.config/coding-harn…"}), \
                     patch.object(pane, "send_text") as send:
@@ -137,6 +135,17 @@ class PaneTests(unittest.TestCase):
                     with self.assertRaises(ValueError):
                         pane.close(request, status)
                     send.assert_not_called()
+
+    def test_close_refuses_after_launcher_exits(self):
+        request, status = self.prepare()
+        status["status"] = "reported"
+        launcher = subprocess.Popen([sys.executable, "-c", "pass", "launch", "--request", str(self.path)])
+        launcher.wait()
+        status["launcher_pid"] = launcher.pid
+        with patch.object(pane, "tabs", return_value={"38": "claude"}), patch.object(pane, "send_text") as send:
+            with self.assertRaises(ValueError):
+                pane.close(request, status)
+            send.assert_not_called()
 
     def test_self_target_and_wrong_model_are_rejected(self):
         self.args.target_tab = "6"

@@ -256,8 +256,7 @@ def launch(request, status):
         cwd = request["workdir"] if request["role"] == "worker" else request["output_dir"]
         trust = codex_trust(cwd) if request["cli"] == "codex" and cwd == request["output_dir"] else contextlib.nullcontext()
         with trust, subprocess.Popen(command, cwd=cwd, env=environment) as process:
-            status.update(process_pid=process.pid, launcher_pid=os.getpid())
-            status["process_start_ticks"] = process_identity(process.pid)[0]
+            status["launcher_pid"] = os.getpid()
             save(request, status)
             previous = signal.signal(signal.SIGINT, signal.SIG_IGN)
             try:
@@ -300,37 +299,12 @@ def finish(request, status, outcome):
     notify(request, status)
 
 
-def process_identity(pid):
-    # 재사용된 PID를 가리려고 시작 시각을 함께 본다. Linux는 /proc의 시작 tick,
-    # /proc이 없는 macOS는 ps의 시작 시각 문자열이다. 반환은 (시작 식별자, 좀비 여부).
-    stat = Path(f"/proc/{pid}/stat")
-    if stat.exists():
-        fields = stat.read_text().rpartition(")")[2].split()
-        return fields[19], fields[0] == "Z"
-    start = subprocess.run(["ps", "-o", "lstart=", "-p", str(pid)], capture_output=True, text=True).stdout.strip()
-    state = subprocess.run(["ps", "-o", "stat=", "-p", str(pid)], capture_output=True, text=True).stdout.strip()
-    if not start:
-        raise ValueError("원래 실행한 프로세스가 아닙니다")
-    return start, state.startswith("Z")
-
-
 def launcher_runs(request, status):
-    # mast ls는 COMMAND 열을 40자로 잘라 보여 주므로 요청 경로는 launcher의 argv·환경으로 확인한다.
-    pid = status.get("launcher_pid", 0)
-    request_path = str(Path(request["output_dir"]) / "request.json")
-    tab = f"MAST_TAB={request['target_tab']}"
-    proc = Path(f"/proc/{pid}")
-    if proc.exists():
-        try:
-            argv = (proc / "cmdline").read_bytes().decode(errors="replace").split("\0")
-            environ = (proc / "environ").read_bytes().decode(errors="replace").split("\0")
-        except OSError:
-            return False
-        return "launch" in argv and request_path in argv and tab in environ
-    # macOS는 /proc이 없다. ps -E가 같은 사용자 프로세스의 argv 뒤에 환경을 붙여 보여 준다.
-    shown = subprocess.run(["ps", "-E", "-ww", "-o", "command=", "-p", str(pid)],
-                           capture_output=True, text=True).stdout.split()
-    return "launch" in shown and request_path in shown and tab in shown
+    # mast ls는 COMMAND 열을 잘라 보여 주므로 launcher의 전체 명령줄로 요청을 확인한다.
+    # launcher는 에이전트가 끝날 때까지 기다리므로 살아 있으면 에이전트도 실행 중이다.
+    shown = subprocess.run(["ps", "-ww", "-o", "command=", "-p", str(status.get("launcher_pid", 0))],
+                           capture_output=True, text=True).stdout.strip()
+    return shown.endswith(f" launch --request {Path(request['output_dir']) / 'request.json'}")
 
 
 def close(request, status):
@@ -344,9 +318,6 @@ def close(request, status):
         raise ValueError("이미 종료했거나 종료를 요청한 세션입니다")
     if not command or not launcher_runs(request, status):
         raise ValueError("대상 pane의 실행 명령이 이 요청과 다릅니다")
-    start, zombie = process_identity(status["process_pid"])
-    if start != status["process_start_ticks"] or zombie:
-        raise ValueError("원래 실행한 프로세스가 아닙니다")
     status["close_requested_at"] = time.time()
     save(request, status)
     send_text(request["target_tab"], "/exit")

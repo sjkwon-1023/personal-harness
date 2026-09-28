@@ -37,7 +37,7 @@ dispatch-plan 3단계의 세부 절차다. 외부 모델 위임은 `~/.config/co
 
 중단 후에는 `progress.json`, 실제 worktree, pane과 프로세스 상태를 한 번 대조한다.
 
-- worker 생존 여부는 `status.json`의 `process_pid`·`process_start_ticks`를 `/proc/<pid>/stat`의 시작 tick과 비교해 판단한다.
+- worker 생존 여부는 `ps -ww -o command= -p <launcher_pid>`가 `launch --request <request.json 경로>`로 끝나는지로 판단한다.
   PID만 보고 종료 명령을 보내지 않고, 살아 있는 worker 위에 새 worker를 띄우지 않는다.
 - `running` 표시만 보고 성공 처리하거나 `accepted` 청크를 자동으로 다시 실행하지 않는다.
 - 마지막 승인 상태의 해시를 현재 코드와 비교하고, 달라졌다면 영향받는 청크와 게이트를 다시 검토한다.
