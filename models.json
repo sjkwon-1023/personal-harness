@@ -6,7 +6,7 @@
   },
   "codex": {
     "light": { "model": "gpt-6-luna", "effort": "max" },
-    "standard": { "model": "gpt-6-sol", "effort": "high" },
+    "standard": { "model": "gpt-6.1-sol", "effort": "high" },
     "top": { "model": "gpt-6-astra", "effort": "high" }
   },
   "opencode": {
