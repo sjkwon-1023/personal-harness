@@ -32,6 +32,7 @@ git -C .bare worktree add ../main main
 - `~/.config/coding-harness`를 이 워크트리로 링크한다. 지침과 스킬은 이 경로를 기준으로 서로를 가리킨다.
 - 설치된 CLI마다 전역 지침 파일과 스킬 폴더를 링크한다.
 - `~/.codex/AGENTS.md`는 mast 관리 블록을 유지한 복사본으로 갱신한다.
+- `~/.codex/rules/personal-harness.rules`에 `pane-role.py finish` 허용 규칙을 만들어, Codex sandbox가 `[HARNESS-DONE]` 회신을 막지 않게 한다.
 - `agents/sync.py`로 CLI별 서브에이전트 파일을 만든다.
 - OpenCode는 `disable-model-invocation`을 지키지 않으므로, 이 값이 `true`인 스킬을 OpenCode 설정의 `permission.skill`에 `ask`로 넣는다.
 - `~/.local/bin/new-worktree`를 링크하고 PATH와 CLI 설치 여부를 확인한다.

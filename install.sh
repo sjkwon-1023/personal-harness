@@ -54,6 +54,21 @@ sync_codex_agents() {
 	printf '갱신: %s\n' "$file"
 }
 
+# Codex sandbox에서는 mast가 터미널을 열지 못해 [HARNESS-DONE] 회신이 사라지므로 finish만 sandbox 밖에서 자동 실행한다.
+# request.json의 helper는 pane-role.py의 실제 경로라서 링크 대신 이 워크트리 경로로 규칙 파일을 만든다.
+# default.rules는 Codex가 "항상 허용" 승인을 기록하는 파일이라 건드리지 않는다.
+sync_codex_rules() {
+	local file="$HOME/.codex/rules/personal-harness.rules"
+	mkdir -p "$(dirname "$file")"
+	printf 'prefix_rule(pattern=["python3", "%s", "finish"], decision="allow")\n' "$REPO/pane/pane-role.py" >"$file.tmp"
+	if [ -f "$file" ] && cmp -s "$file.tmp" "$file"; then
+		rm "$file.tmp"
+		return 0
+	fi
+	mv "$file.tmp" "$file"
+	printf '갱신: %s\n' "$file"
+}
+
 # OpenCode는 disable-model-invocation을 모르므로, 명시 호출 전용 스킬은 skill 권한을 ask로 두어 자동 호출을 막는다.
 sync_opencode_skill_permissions() {
 	python3 - "$REPO/skills" "$HOME/.config/opencode" <<'PY'
@@ -104,6 +119,7 @@ if [ -d "$HOME/.claude" ]; then
 fi
 if [ -d "$HOME/.codex" ]; then
 	sync_codex_agents
+	sync_codex_rules
 	link_skills skills "$HOME/.codex/skills"
 fi
 if [ -d "$HOME/.config/opencode" ]; then
