@@ -20,7 +20,8 @@ class PaneTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name)
+        # macOS의 임시 경로(/var)는 /private/var 링크라 prepare가 resolve한 경로와 맞춘다.
+        self.root = Path(self.temp.name).resolve()
         self.brief = self.root / "brief ' $(literal).md"
         self.brief.write_text("R1: implement only this chunk")
         self.args = SimpleNamespace(role="worker", model="opencode:light", target_tab="38",
@@ -118,14 +119,12 @@ class PaneTests(unittest.TestCase):
     def test_close_identifies_session_by_launcher_despite_truncated_pane_command(self):
         request, status = self.prepare()
         status["status"] = "reported"
-        for tab, accepted in (("38", True), ("39", False)):
+        for request_path, accepted in ((self.path, True), (self.root / "other" / "request.json", False)):
             launcher = subprocess.Popen(
-                [sys.executable, "-c", "import time; time.sleep(30)", "launch", "--request", str(self.path)],
-                env=dict(os.environ, MAST_TAB=tab))
+                [sys.executable, "-c", "import time; time.sleep(30)", "launch", "--request", str(request_path)])
             self.addCleanup(launcher.wait)
             self.addCleanup(launcher.kill)
-            ticks = Path(f"/proc/{launcher.pid}/stat").read_text().rpartition(")")[2].split()[19]
-            status.update(launcher_pid=launcher.pid, process_pid=launcher.pid, process_start_ticks=ticks)
+            status.update(launcher_pid=launcher.pid)
             status.pop("close_requested_at", None)
             with patch.object(pane, "tabs", return_value={"38": "python3 /home/user/.config/coding-harn…"}), \
                     patch.object(pane, "send_text") as send:
@@ -136,6 +135,17 @@ class PaneTests(unittest.TestCase):
                     with self.assertRaises(ValueError):
                         pane.close(request, status)
                     send.assert_not_called()
+
+    def test_close_refuses_after_launcher_exits(self):
+        request, status = self.prepare()
+        status["status"] = "reported"
+        launcher = subprocess.Popen([sys.executable, "-c", "pass", "launch", "--request", str(self.path)])
+        launcher.wait()
+        status["launcher_pid"] = launcher.pid
+        with patch.object(pane, "tabs", return_value={"38": "claude"}), patch.object(pane, "send_text") as send:
+            with self.assertRaises(ValueError):
+                pane.close(request, status)
+            send.assert_not_called()
 
     def test_self_target_and_wrong_model_are_rejected(self):
         self.args.target_tab = "6"

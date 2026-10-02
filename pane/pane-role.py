@@ -256,8 +256,7 @@ def launch(request, status):
         cwd = request["workdir"] if request["role"] == "worker" else request["output_dir"]
         trust = codex_trust(cwd) if request["cli"] == "codex" and cwd == request["output_dir"] else contextlib.nullcontext()
         with trust, subprocess.Popen(command, cwd=cwd, env=environment) as process:
-            status.update(process_pid=process.pid, launcher_pid=os.getpid())
-            status["process_start_ticks"] = Path(f"/proc/{process.pid}/stat").read_text().rpartition(")")[2].split()[19]
+            status["launcher_pid"] = os.getpid()
             save(request, status)
             previous = signal.signal(signal.SIGINT, signal.SIG_IGN)
             try:
@@ -301,16 +300,11 @@ def finish(request, status, outcome):
 
 
 def launcher_runs(request, status):
-    # mast ls는 COMMAND 열을 40자로 잘라 보여 주므로 요청 경로는 launcher의 /proc 정보로 확인한다.
-    proc = Path(f"/proc/{status.get('launcher_pid', 0)}")
-    try:
-        argv = (proc / "cmdline").read_bytes().split(b"\0")
-        environ = (proc / "environ").read_bytes().split(b"\0")
-    except OSError:
-        return False
-    request_path = str(Path(request["output_dir"]) / "request.json").encode()
-    return (b"launch" in argv and request_path in argv
-            and f"MAST_TAB={request['target_tab']}".encode() in environ)
+    # mast ls는 COMMAND 열을 잘라 보여 주므로 launcher의 전체 명령줄로 요청을 확인한다.
+    # launcher는 에이전트가 끝날 때까지 기다리므로 살아 있으면 에이전트도 실행 중이다.
+    shown = subprocess.run(["ps", "-ww", "-o", "command=", "-p", str(status.get("launcher_pid", 0))],
+                           capture_output=True, text=True).stdout.strip()
+    return shown.endswith(f" launch --request {Path(request['output_dir']) / 'request.json'}")
 
 
 def close(request, status):
@@ -324,9 +318,6 @@ def close(request, status):
         raise ValueError("이미 종료했거나 종료를 요청한 세션입니다")
     if not command or not launcher_runs(request, status):
         raise ValueError("대상 pane의 실행 명령이 이 요청과 다릅니다")
-    stat = Path(f"/proc/{status['process_pid']}/stat").read_text().rpartition(")")[2].split()
-    if stat[19] != status["process_start_ticks"] or stat[0] == "Z":
-        raise ValueError("원래 실행한 프로세스가 아닙니다")
     status["close_requested_at"] = time.time()
     save(request, status)
     send_text(request["target_tab"], "/exit")

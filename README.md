@@ -46,7 +46,3 @@ git -C .bare worktree add ../main main
 
 인증 정보, `~/.claude/settings.json`·`~/.codex/config.toml` 같은 컴퓨터별 설정, mast가 설치하는 스킬과 훅,
 claude.ai에서 동기화되는 스킬, 실행 기록(각 레포의 `.bare/harness-runs/`).
-
-## 제약
-
-`pane/pane-role.py`는 `/proc`를 쓰므로 아직 macOS에서 동작하지 않는다. mast의 macOS 지원에 맞춰 옮길 예정이다.
