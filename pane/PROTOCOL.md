@@ -6,7 +6,6 @@
 ## 수신
 
 1. `request.json`의 id, role, cli, model_id, workdir, output_dir, target_tab, reply_tab, helper를 읽는다.
-   `MAST_TAB`이 target_tab과 다르거나 자신의 실행 모델이 요청과 다르면 수행하지 않고 현재 pane에 알린다.
 2. 요청 파일에 적힌 절대경로를 그대로 써서 수신을 확인한다.
 
    ```bash
