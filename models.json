@@ -11,7 +11,7 @@
     "top": { "model": "gpt-6-astra", "effort": "high" }
   },
   "opencode": {
-    "light": { "model": "opencode-go/deepseek-v4.1-flash", "effort": "high" }
+    "light": { "model": "opencode-go/deepseek-v4.1-flash", "effort": "xhigh" }
   },
   "agy": {
     "standard": { "model": "gemini-3.8-flash-medium" }
