@@ -1,5 +1,6 @@
 {
   "claude": {
+    "mini": { "model": "claude-haiku-5-5", "effort": "xhigh" },
     "light": { "model": "claude-sonnet-5-5", "effort": "high" },
     "standard": { "model": "claude-opus-5-5", "effort": "high" },
     "top": { "model": "claude-fable-5-1", "effort": "high" }
@@ -10,7 +11,7 @@
     "top": { "model": "gpt-6-astra", "effort": "high" }
   },
   "opencode": {
-    "light": { "model": "opencode-go/deepseek-v4.1-flash", "effort": "high" }
+    "light": { "model": "opencode-go/deepseek-v4.1-flash", "effort": "xhigh" }
   },
   "agy": {
     "standard": { "model": "gemini-3.8-flash-medium" }
