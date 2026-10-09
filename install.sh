@@ -116,6 +116,9 @@ link "$REPO" "$HARNESS"
 if [ -d "$HOME/.claude" ]; then
 	link "$HARNESS/AGENTS.md" "$HOME/.claude/CLAUDE.md"
 	link_skills skills "$HOME/.claude/skills"
+	for rule in "$REPO"/claude/rules/*.md; do
+		link "$HARNESS/claude/rules/$(basename "$rule")" "$HOME/.claude/rules/$(basename "$rule")"
+	done
 fi
 if [ -d "$HOME/.codex" ]; then
 	sync_codex_agents
