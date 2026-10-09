@@ -6,6 +6,7 @@ Claude Code, Codex, OpenCode, Antigravity CLI가 함께 쓰는 개인 전역 지
 |---|---|
 | `AGENTS.md` | 전역 지침 |
 | `skills/` | 모든 CLI 공용 스킬 |
+| `claude/rules/` | Claude Code에만 주는 전역 규칙. `~/.claude/rules/`로 링크한다 |
 | `roles/` | 위임 세션에 주입하는 역할 지침 |
 | `models.json` | CLI별 등급(`mini`/`light`/`standard`/`top`)의 모델 ID와 effort. 모델을 바꿀 때는 이 파일만 고친다 |
 | `pane/` | mast pane 위임 절차, helper, 난이도별 역할 조합(`routing.json`) |
@@ -30,7 +31,7 @@ git -C .bare worktree add ../main main
 `install.sh`는 다음을 한다. 링크가 아닌 파일이 이미 있으면 덮어쓰지 않고 알린다.
 
 - `~/.config/coding-harness`를 이 워크트리로 링크한다. 지침과 스킬은 이 경로를 기준으로 서로를 가리킨다.
-- 설치된 CLI마다 전역 지침 파일과 스킬 폴더를 링크한다.
+- 설치된 CLI마다 전역 지침 파일과 스킬 폴더를 링크한다. Claude Code에는 `claude/rules/`의 규칙 파일도 링크한다.
 - `~/.codex/AGENTS.md`는 mast 관리 블록을 유지한 복사본으로 갱신한다.
 - `~/.codex/rules/personal-harness.rules`에 `pane-role.py finish` 허용 규칙을 만들어, Codex sandbox가 `[HARNESS-DONE]` 회신을 막지 않게 한다.
 - `agents/sync.py`로 CLI별 서브에이전트 파일을 만든다.
@@ -39,7 +40,7 @@ git -C .bare worktree add ../main main
 
 ## 업데이트
 
-`main` 워크트리에서 `git pull`하면 링크된 지침과 스킬은 바로 반영된다. `AGENTS.md`, `models.json`, `agents/`, 스킬 목록이 바뀌었으면
+`main` 워크트리에서 `git pull`하면 링크된 지침과 스킬은 바로 반영된다. `AGENTS.md`, `models.json`, `agents/`, 스킬·규칙 목록이 바뀌었으면
 `./install.sh`를 다시 실행한다. 수정은 `new-worktree`로 만든 기능 워크트리에서 하고 PR로 머지한다.
 
 ## 레포에 두지 않는 것
