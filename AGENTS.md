@@ -38,6 +38,7 @@ Claude Code, Codex, OpenCode, Antigravity CLI가 공유하는 지침입니다.
 완료 후에는 저장소 정책에 따라 ADR로 정리하고 계획 파일을 삭제합니다.
 
 영구 지침을 추가·변경하기 전에는 사용자 승인을 받습니다. 공통 규칙은 이 원본에, 저장소 규칙은 해당 저장소의 `AGENTS.md`에 둡니다.
+저장소 지침 파일은 `AGENTS.md` 하나로 통일합니다. Claude Code도 `AGENTS.md`를 읽으므로 저장소에 `CLAUDE.md`·`CLAUDE.local.md`를 만들지 않고, Claude 전용 내용도 `AGENTS.md`에 씁니다.
 도구별 자동 메모리는 보조 용도로만 사용합니다.
 
 ## 위임과 워크플로
