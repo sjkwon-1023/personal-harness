@@ -235,6 +235,8 @@ def launch_command(request):
     elif cli == "agy":
         command = [binary("agy"), "--model", request["model_id"],
                    "--add-dir", request["output_dir"] if worker else request["workdir"]]
+        if worker:
+            command.extend(["--mode", "accept-edits"])
         if effort:
             command.extend(["--effort", effort])
         command.extend(["--prompt-interactive", prompt])
