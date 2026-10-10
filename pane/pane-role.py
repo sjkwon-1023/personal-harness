@@ -236,7 +236,7 @@ def launch_command(request):
         command = [binary("agy"), "--model", request["model_id"],
                    "--add-dir", request["output_dir"] if worker else request["workdir"]]
         if worker:
-            command.extend(["--mode", "accept-edits"])
+            command.append("--dangerously-skip-permissions")
         if effort:
             command.extend(["--effort", effort])
         command.extend(["--prompt-interactive", prompt])
