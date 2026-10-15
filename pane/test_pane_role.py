@@ -89,7 +89,11 @@ class PaneTests(unittest.TestCase):
             self.assertNotIn("--session", command)
             config = json.loads(environment["OPENCODE_CONFIG_CONTENT"])
             self.assertEqual(config["model"], pane.MODELS["opencode"]["light"]["model"])
+            self.assertEqual(config["default_agent"], "chunk-worker")
             self.assertEqual(config["agent"]["chunk-worker"]["permission"]["task"], "deny")
+            self.assertIn("--standalone", command)
+            self.assertNotIn("--model", command)
+            self.assertNotIn("--agent", command)
             request.update(role="review", cli="codex", model="codex:standard", model_id=pane.MODELS["codex"]["standard"]["model"])
             command, _ = pane.launch_command(request)
             self.assertNotIn("exec", command)
@@ -174,7 +178,8 @@ class PaneTests(unittest.TestCase):
                     with patch.object(pane, "binary", side_effect=lambda name: name):
                         command, _ = pane.launch_command(request)
                     self.assertEqual(command[0], cli)
-                    self.assertEqual(command[command.index("--model") + 1], self.args.model)
+                    if cli != "opencode":
+                        self.assertEqual(command[command.index("--model") + 1], self.args.model)
                     for option in ("exec", "run", "--print", "-p", "--resume", "--continue", "--session"):
                         self.assertNotIn(option, command)
                     self.assertTrue(any(Path(request["role_file"]).read_text() in arg for arg in command))

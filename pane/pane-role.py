@@ -207,10 +207,12 @@ def launch_command(request):
             agent["permission"]["edit"] = {"*": "deny", request["output_dir"] + "/*": "allow"}
             agent["permission"]["bash"]["*"] = "ask"
         config["model"] = config["small_model"] = request["model_id"]
+        # OpenCode v2 TUI는 --model/--agent를 받지 않으므로 기본 에이전트로 지정한다.
+        config["default_agent"] = "chunk-worker"
         config.setdefault("agent", {})["chunk-worker"] = agent
         environment["OPENCODE_CONFIG_CONTENT"] = json.dumps(config, ensure_ascii=False)
-        command = [binary("opencode"), cwd, "--model", request["model_id"],
-                   "--agent", "chunk-worker", "--prompt", prompt]
+        # 공유 백그라운드 서비스는 처음 띄운 프로세스의 env 설정을 유지하므로 전용 서버로 실행한다.
+        command = [binary("opencode"), cwd, "--standalone", "--prompt", prompt]
         if worker:
             command.append("--auto")
     elif cli == "codex":
