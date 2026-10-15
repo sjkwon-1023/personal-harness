@@ -192,7 +192,7 @@ class PaneTests(unittest.TestCase):
                         self.assertEqual("--auto" in command, role == "worker")
                     if cli == "agy":
                         self.assertIn("--prompt-interactive", command)
-                        self.assertEqual("accept-edits" in command, role == "worker")
+                        self.assertEqual("--dangerously-skip-permissions" in command, role == "worker")
                     if cli == "claude":
                         self.assertNotIn("Agent", command[command.index("--tools") + 1].split(","))
 
