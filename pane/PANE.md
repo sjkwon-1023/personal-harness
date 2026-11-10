@@ -28,6 +28,7 @@ python3 $H send --request /abs/repo/.bare/harness-runs/<task-id>/<단계>/reques
 - `--effort`: 선택. 생략하면 `models.json`에 정한 effort를 쓴다.
 - worker가 아닌 역할의 `--output-dir`는 프로젝트 밖이어야 한다.
 - 브리프에 메인의 평가나 기대하는 결론은 넣지 않는다.
+- 브리프의 원문 요구는 사용자 메시지를 요약하거나 고쳐 쓰지 않고 그대로 옮긴다. 이후 사용자가 바꾸거나 더한 요구도 순서대로 함께 넣는다.
 
 ## 세션 닫기
 
